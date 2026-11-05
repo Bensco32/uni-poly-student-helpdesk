@@ -1,11 +1,11 @@
 (function () {
   "use strict";
-  var DB_KEY = "common-room-helpdesk-db-v1";
-  var SESSION_KEY = "common-room-helpdesk-session-v1";
+  var DB_KEY = "student-helpdesk-db-v1";
+  var SESSION_KEY = "student-helpdesk-session-v1";
   var app = document.getElementById("app");
   var selectedTicketId = null;
   var csrfToken = null;
-  var SETTINGS = { brand_name: "Student Help Desk", app_title: "Student HelpDesk · PTI", welcome_message: "A calmer way to ask for help.", footer_text: "Common Room · University support desk", institution: "Polytechnic (PTI)", primary_color: "#23444a", logo_path: "", favicon_path: "" };
+  var SETTINGS = { brand_name: "Student Help Desk", app_title: "Student HelpDesk · PTI", welcome_message: "A calmer way to ask for help.", footer_text: "Student Help Desk · University support desk", institution: "Polytechnic (PTI)", primary_color: "#23444a", logo_path: "", favicon_path: "" };
   var MAINT = { enabled: false, title: "Under maintenance", message: "We are improving the help desk. Please check back soon.", reopening_at: null };
   var SOUNDS = [{ id: "none", label: "No sound" }];
   var currentUser = null;

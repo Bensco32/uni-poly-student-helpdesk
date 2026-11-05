@@ -118,7 +118,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);`);
 /* ---------------- settings / maintenance ---------------- */
 const DEFAULT_SETTINGS = {
   brand_name: "Student Help Desk", app_title: "Student HelpDesk · PTI",
-  welcome_message: "A calmer way to ask for help.", footer_text: "Common Room · University support desk",
+  welcome_message: "A calmer way to ask for help.", footer_text: "Student Help Desk · University support desk",
   institution: "Polytechnic (PTI)", primary_color: "#23444a",
   contact_email: "helpdesk@university.edu", contact_phone: "", logo_path: "", favicon_path: ""
 };

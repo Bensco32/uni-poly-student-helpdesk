@@ -1,4 +1,4 @@
-COMMON ROOM - STUDENT HELPDESK
+STUDENT HELP DESK
 ==============================
 
 This ZIP contains a standalone version built with only:
