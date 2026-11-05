@@ -1,0 +1,36 @@
+# Secrets & local environment (never commit)
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Local database + WAL/SHM (production DB lives on the Render disk, never in repo)
+data/*.sqlite
+data/*.sqlite-*
+data/*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.bak
+data/backups/
+
+# Uploads (production uploads live in /var/data/uploads on the disk)
+assets/uploads/
+assets/sounds/custom-*
+assets/sounds/upload-*
+
+# Logs, temp, OS/editor
+*.log
+logs/
+tmp/
+temp/
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+
+# Backup archives
+*.zip
+*.tar.gz

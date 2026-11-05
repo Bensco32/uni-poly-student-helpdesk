@@ -1,0 +1,15 @@
+{
+  "name": "pti-student-help-desk",
+  "version": "1.0.0",
+  "description": "Student Help Desk – PTI: student/lecturer portals, ticketing, notifications and admin dashboard (Node.js + node:sqlite, zero dependencies).",
+  "main": "server.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check db.js && node --check app.js && node --check admin/app.js"
+  }
+}

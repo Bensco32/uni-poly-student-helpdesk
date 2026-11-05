@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: pti-student-help-desk
+    runtime: node
+    # Paid plan REQUIRED: Render free instances cannot attach persistent disks,
+    # so SQLite persistence is only guaranteed on a paid plan (Starter+).
+    # Use "starter" for low cost or "standard" if you want more RAM/CPU.
+    plan: standard
+    rootDir: .
+    # Node 24.x is required for node:sqlite (see package.json engines)
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    disks:
+      - name: pti-helpdesk-data
+        mountPath: /var/data
+        sizeGB: 10
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /var/data
+      - key: DATABASE_PATH
+        value: /var/data/helpdesk.sqlite
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SEED_DEMO
+        value: "false"
+      # PORT is injected automatically by Render — do not set a fixed value.
+      # Sensitive — enter real values in the Render Dashboard (never in git):
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+        generateValue: true
