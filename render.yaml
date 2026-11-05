@@ -12,10 +12,10 @@ services:
     startCommand: npm start
     healthCheckPath: /healthz
     autoDeploy: true
-    disks:
-      - name: pti-helpdesk-data
-        mountPath: /var/data
-        sizeGB: 10
+    disk:
+      name: pti-helpdesk-data
+      mountPath: /var/data
+      sizeGB: 10
     envVars:
       - key: NODE_ENV
         value: production
