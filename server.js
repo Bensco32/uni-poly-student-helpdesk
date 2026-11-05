@@ -199,7 +199,7 @@ function ticketToJson(t) {
   const student = t.student_id ? db.prepare("SELECT * FROM students WHERE id=?").get(t.student_id) : null;
   const lecturer = t.lecturer_id ? db.prepare("SELECT * FROM lecturers WHERE id=?").get(t.lecturer_id) : null;
   return {
-    id: t.id, category: t.category, subject: t.subject, message: t.message, status: t.status,
+    id: t.id, category: t.category, categoryOther: t.category_other || "", subject: t.subject, message: t.message, status: t.status,
     createdAt: t.created_at, updatedAt: t.updated_at, lecturerStaffId: t.lecturer_staff_id,
     student: { id: t.student_id, fullName: student ? student.full_name : t.student_name, email: student ? student.email : "", department: student ? student.department : t.student_department, matricNumber: student ? student.matric_number : t.student_matric },
     lecturer: { id: t.lecturer_id, fullName: lecturer ? lecturer.full_name : t.lecturer_name, staffId: t.lecturer_staff_id, department: lecturer ? lecturer.department : "" },
@@ -408,13 +408,36 @@ async function handleApi(req, res, pathname, query) {
     const lec = db.prepare("SELECT * FROM lecturers WHERE staff_id=? COLLATE NOCASE AND active=1 AND deleted=0").get(staffId);
     if (!lec) return json(400, { error: "Enter a Lecturer ID from the registered directory." });
     const subject = esc(b.subject).trim(), message = esc(b.message).trim(), category = esc(b.category).trim() || "General";
+    const categoryOther = esc(b.categoryOther).trim();
+    if (category === "Other" && !categoryOther) return json(400, { error: "Please describe your issue under Other." });
     if (subject.length < 2 || message.length < 5) return json(400, { error: "Please give a clear subject and message." });
     const id = nextTicketId(); const ts = now();
-    db.prepare("INSERT INTO tickets(id,category,subject,message,status,lecturer_staff_id,student_id,lecturer_id,student_name,student_matric,student_department,lecturer_name,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .run(id, category, subject, message, "open", lec.staff_id, s.userId, lec.id, s.user.full_name, s.user.matric_number, s.user.department, lec.full_name, ts, ts);
+    db.prepare("INSERT INTO tickets(id,category,category_other,subject,message,status,lecturer_staff_id,student_id,lecturer_id,student_name,student_matric,student_department,lecturer_name,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .run(id, category, categoryOther || null, subject, message, "open", lec.staff_id, s.userId, lec.id, s.user.full_name, s.user.matric_number, s.user.department, lec.full_name, ts, ts);
     db.prepare("INSERT INTO ticket_messages(id,ticket_id,author_type,author_name,message,created_at) VALUES(?,?,?,?,?,?)")
       .run(uid("msg"), id, "student", s.user.full_name, message, ts);
     return json(201, { ticket: ticketToJson(db.prepare("SELECT * FROM tickets WHERE id=?").get(id)) });
+  }
+  const ticketDelete = pathname.match(/^\/api\/tickets\/([^/]+)$/);
+  if (ticketDelete && method === "DELETE") {
+    const s = requireUser(req, res); if (!s) return;
+    const t = db.prepare("SELECT * FROM tickets WHERE id=?").get(decodeURIComponent(ticketDelete[1]));
+    if (!t) return json(404, { error: "Ticket not found." });
+    let owns;
+    if (s.userType === "student") owns = t.student_id === s.userId;
+    else if (s.userType === "lecturer") owns = (t.lecturer_staff_id || "").toLowerCase() === (s.user.staff_id || "").toLowerCase();
+    else owns = false;
+    if (!owns) return json(403, { error: "Not your ticket." });
+    try {
+      db.exec("BEGIN");
+      db.prepare("DELETE FROM ticket_messages WHERE ticket_id=?").run(t.id);
+      db.prepare("DELETE FROM tickets WHERE id=?").run(t.id);
+      db.exec("COMMIT");
+    } catch (e) {
+      try { db.exec("ROLLBACK"); } catch (_) {}
+      return json(500, { error: "Could not delete ticket." });
+    }
+    return json(200, { ok: true, deleted: t.id });
   }
   const ticketSub = pathname.match(/^\/api\/tickets\/([^/]+)\/(reply|status)$/);
   if (ticketSub && method === "POST") {
@@ -637,6 +660,21 @@ async function handleApi(req, res, pathname, query) {
       res.end(csv); return;
     }
     const aTick = pathname.match(/^\/api\/admin\/tickets\/([^/]+)$/);
+    if (aTick && method === "DELETE") {
+      const t = db.prepare("SELECT * FROM tickets WHERE id=?").get(decodeURIComponent(aTick[1]));
+      if (!t) return json(404, { error: "Ticket not found." });
+      try {
+        db.exec("BEGIN");
+        db.prepare("DELETE FROM ticket_messages WHERE ticket_id=?").run(t.id);
+        db.prepare("DELETE FROM tickets WHERE id=?").run(t.id);
+        db.exec("COMMIT");
+      } catch (e) {
+        try { db.exec("ROLLBACK"); } catch (_) {}
+        return json(500, { error: "Could not delete ticket." });
+      }
+      audit(adminUser, "ticket_deleted", "ticket:" + t.id, "Deleted " + t.subject);
+      return json(200, { ok: true, deleted: t.id });
+    }
     if (aTick && method === "PATCH") {
       const t = db.prepare("SELECT * FROM tickets WHERE id=?").get(decodeURIComponent(aTick[1]));
       if (!t) return json(404, { error: "Ticket not found." });

@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS lecturers (
   active INTEGER NOT NULL DEFAULT 1, deleted INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL, last_login_at TEXT);
 CREATE TABLE IF NOT EXISTS tickets (
-  id TEXT PRIMARY KEY, category TEXT NOT NULL DEFAULT '', subject TEXT NOT NULL DEFAULT '',
+  id TEXT PRIMARY KEY, category TEXT NOT NULL DEFAULT '', category_other TEXT DEFAULT '', subject TEXT NOT NULL DEFAULT '',
   message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'open',
   lecturer_staff_id TEXT, student_id TEXT, lecturer_id TEXT,
   student_name TEXT DEFAULT '', student_matric TEXT DEFAULT '', student_department TEXT DEFAULT '',
@@ -114,6 +114,10 @@ CREATE TABLE IF NOT EXISTS maintenance (
 db.exec(`CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
 CREATE INDEX IF NOT EXISTS idx_nr_user ON notification_recipients(user_type, user_id, notification_id);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);`);
+try {
+  const ticketCols = db.prepare("PRAGMA table_info(tickets)").all().map((c) => c.name);
+  if (!ticketCols.includes("category_other")) db.exec("ALTER TABLE tickets ADD COLUMN category_other TEXT DEFAULT ''");
+} catch (_) {}
 
 /* ---------------- settings / maintenance ---------------- */
 const DEFAULT_SETTINGS = {

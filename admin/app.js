@@ -219,7 +219,8 @@
       var rows = d.tickets;
       $("#tick-table tbody").innerHTML = rows.length ? rows.map(function (t) {
         var detail = expandedTicket === t.id ? '<tr><td colspan="6" style="background:#f8f3ea"><div style="font-size:12px;color:var(--muted)">' + esc(t.messages.map(function (m) { return "<strong>" + esc(m.authorName) + " (" + esc(m.authorType) + ")</strong> " + fmt(m.createdAt, true) + ": " + esc(m.message); }).join("<br>")) + '</div></td></tr>' : "";
-        return '<tr><td class="mono">' + esc(t.id) + '</td><td><strong>' + esc(t.subject) + '</strong><div style="font-size:11px;color:var(--muted2)">' + esc(t.category) + '</div></td><td>' + esc(t.student.fullName) + '</td><td>' + esc(t.lecturer.fullName) + '</td><td>' + statusPill(t.status) + '</td><td><div class="row-actions"><button class="btn btn-secondary btn-small" data-a="view" data-id="' + t.id + '">' + (expandedTicket === t.id ? "Hide" : "View history") + '</button><button class="btn btn-secondary btn-small" data-a="status" data-id="' + t.id + '">Change status</button><button class="btn btn-secondary btn-small" data-a="reassign" data-id="' + t.id + '">Reassign</button></div></td></tr>' + detail;
+        var cat = t.category === "Other" && t.categoryOther ? "Other — " + t.categoryOther : t.category;
+        return '<tr><td class="mono">' + esc(t.id) + '</td><td><strong>' + esc(t.subject) + '</strong><div style="font-size:11px;color:var(--muted2)">' + esc(cat) + '</div></td><td>' + esc(t.student.fullName) + '</td><td>' + esc(t.lecturer.fullName) + '</td><td>' + statusPill(t.status) + '</td><td><div class="row-actions"><button class="btn btn-secondary btn-small" data-a="view" data-id="' + t.id + '">' + (expandedTicket === t.id ? "Hide" : "View history") + '</button><button class="btn btn-secondary btn-small" data-a="status" data-id="' + t.id + '">Change status</button><button class="btn btn-secondary btn-small" data-a="reassign" data-id="' + t.id + '">Reassign</button><button class="btn btn-danger btn-small" data-a="delete" data-id="' + t.id + '">Delete Ticket</button></div></td></tr>' + detail;
       }).join("") : '<tr><td colspan="6"><div class="empty">No tickets found.</div></td></tr>';
       $$("[data-a]", $("#tick-table")).forEach(function (b) { b.addEventListener("click", function () { ticketAction(b.getAttribute("data-a"), b.getAttribute("data-id"), rows); }); });
     }).catch(function (e) { toast(e.message, "err"); });
@@ -249,6 +250,11 @@
       var bd2 = modal('<div class="modal-head"><div><div class="eyebrow">Ticket ' + esc(id) + '</div><h2>Reassign ticket</h2></div><button class="close-x">×</button></div><div class="modal-body"><form id="rf"><div class="field"><label>New lecturer (Staff ID)</label><input name="reassignTo" required placeholder="e.g. STAFF-1042" /></div><div class="warn">Original messages are preserved. The reassignment is recorded in the audit log.</div><div style="display:flex;justify-content:flex-end;gap:9px"><button type="button" class="btn btn-secondary btn-small" data-x>Cancel</button><button class="btn btn-primary btn-small" type="submit">Reassign</button></div></form></div>');
       bd2.querySelector("[data-x]").addEventListener("click", function () { bd2.remove(); });
       bd2.querySelector("#rf").addEventListener("submit", function (e) { e.preventDefault(); api("/api/admin/tickets/" + encodeURIComponent(id), { method: "PATCH", body: { reassignTo: new FormData(this).get("reassignTo") } }).then(function () { bd2.remove(); toast("Ticket reassigned."); loadTickets(); }).catch(function (err) { toast(err.message, "err"); }); });
+    } else if (a === "delete") {
+      confirmDlg("Delete ticket " + id + " permanently?", "This will delete \"" + t.subject + "\" and its conversations permanently. This cannot be undone.", "Delete", true).then(function (ok) {
+        if (!ok) return;
+        api("/api/admin/tickets/" + encodeURIComponent(id), { method: "DELETE" }).then(function () { toast("Ticket deleted permanently."); if (expandedTicket === id) expandedTicket = null; loadTickets(); }).catch(function (err) { toast(err.message, "err"); });
+      });
     }
   }
 
