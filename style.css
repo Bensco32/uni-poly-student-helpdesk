@@ -246,7 +246,9 @@ a { color: inherit; text-decoration: none; }
   .desk-content { width:min(100% - 36px, 760px); padding-top:35px; }
   .desk-grid { grid-template-columns:1fr; }
   .detail-panel { min-height:0; }
-  .desk-grid .detail-panel { display:none; }
+  .desk-grid .detail-panel.empty { display:none; }
+  .desk-grid.detail-open .panel:first-child { display:none; }
+  .desk-grid .back-to-list { display:inline-flex; margin-bottom:12px; padding-left:0; }
   .mobile-only { display:inline-flex; }
 }
 @media (max-width: 720px) {
